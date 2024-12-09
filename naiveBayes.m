@@ -6,6 +6,7 @@ data = readtable('data_table.csv');
 
 % 2. Pré-processamento
 % Remover colunas irrelevantes (customer, merchant, zipcodeOri, zipMerchant)
+data.step = [];
 data.customer = [];
 data.merchant = [];
 data.zipcodeOri = [];
@@ -24,6 +25,8 @@ y = data.fraud;       % Última coluna como alvo (se é fraude ou não)
 
 % Dividir em conjunto de treino e teste
 cv = cvpartition(height(data), 'HoldOut', 0.3);
+% 70% dos dados servem para treino, 30% para teste
+
 XTrain = X(training(cv), :);
 yTrain = y(training(cv), :);
 XTest = X(test(cv), :);
@@ -37,6 +40,12 @@ yPred = predict(model, XTest);
 
 % 5. Avaliar o Modelo
 confMat = confusionmat(yTest, yPred);
+
+% Visualizar Matriz de Confusão
+figure;
+confusionchart(yTest, yPred);
+title('Matriz de Confusão');
+
 % Matriz de confusão
 disp('Matriz de Confusão:');
 disp(confMat);
@@ -53,6 +62,13 @@ disp("True negatives: " + tn)
 disp("False negatives: " + fn)
 disp("-----------------------------")
 
+fpr = fp / (fp + tn); % False Positive Rate
+fnr = fn / (fn + tp); % False Negative Rate
+disp("False Positive Rate: " + fpr);
+disp("False Negative Rate: " + fnr);
+disp("-----------------------------")
+
+
 accuracy = (tp + tn) / (tp + tn + fp + fn);
 precision = tp / (tp + fp);
 recall = tp / (tp + fn);
@@ -62,4 +78,3 @@ disp("Accuracy: " + accuracy)
 disp("Precision: " + precision)
 disp("Recall: " + recall)
 disp("F1: " + f1)
-
