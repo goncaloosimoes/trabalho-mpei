@@ -2,15 +2,14 @@ clear;
 clc;
 
 % Parâmetros do Bloom Filter
-[size, hashCount] = calcularParametros('data_table.csv', 0.01);
-size = round(size); % Passar de notação científica para int
+size = 1000000;      % Tamanho do vetor binário
+hashCount = 2;       % Número de funções hash
 
 % Criar o Bloom Filter
 bloomFilter = InitializeBF(size);
 
 % Carregar Dados
 data = readtable('data_table.csv');
-n = height(data); % número de linhas no ficheiro para calcular FPR
 
 % Verificar integridade dos dados
 requiredFields = {'age', 'gender'};
@@ -30,23 +29,21 @@ function str = toString(value)
     end
 end
 
-
 % Adicionar dados ao Bloom Filter
 disp('Adicionando transações conhecidas ao Bloom Filter...');
-
 tic; % Início do cronômetro
 for i = 1:height(data)
     ageStr = toString(data.age{i});
     genderStr = toString(data.gender{i});
     transactionID = sprintf('%s%s%d', ageStr, genderStr, i);
-    % adicionar ID da transação ao filtro
     bloomFilter = addBF(bloomFilter, transactionID, hashCount);
+
     if mod(i, 1000) == 0
-        fprintf('Adicionadas %d transações ao Bloom Filter...\n', i);
+        fprintf('Adicionadas %d transações ao Bloom Filter...
+', i);
     end
 end
 toc; % Fim do cronômetro
-
 disp('Adição completa.');
 
 % Salvar o Bloom Filter
@@ -64,10 +61,6 @@ for i = 1:length(newTransactions)
     if isPresent
         resultMsg = 'PODE ser conhecida (ou falso positivo)';
     end
-    fprintf('A transação "%s" %s.\n', transactionID, resultMsg);
+    fprintf('A transação "%s" %s.
+', transactionID, resultMsg);
 end
-
-
-% Calcular taxa de falsos positivos
-FPR = falsePositiveRate(size,hashCount,n);
-disp("Taxa de falsos positivos no Bloom Filter: " + FPR);
