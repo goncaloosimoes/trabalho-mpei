@@ -1,64 +1,125 @@
 clear;
 clc;
 
-% Parâmetros do Bloom Filter
-[size, hashCount] = calcularParametros('data_table.csv', 0.01);
-size = round(size); % Passar de notação científica para int
+FILENAME = 'data_table.csv';
 
-% Criar o Bloom Filter
-bloomFilter = InitializeBF(size);
+[SIZE, HASHCOUNT] = calcularParametros('data_table.csv', 0.01);
+SIZE = round(SIZE); % Passar de notação científica para int
 
-% Carregar Dados
-data = readtable('data_table.csv');
-n = height(data); % número de linhas no ficheiro para calcular FPR
 
-% Verificar integridade dos dados
-requiredFields = {'age', 'gender'};
-if ~all(ismember(requiredFields, data.Properties.VariableNames))
-    error('As colunas necessárias estão ausentes no arquivo CSV.');
-end
-
-% Remover linhas com dados ausentes
-data = rmmissing(data);
-
-% Função auxiliar para conversão de dados para string
-function str = toString(value)
-    if ischar(value) || isstring(value)
-        str = char(value); % Converter para string se necessário
+% Verificar se o Bloom Filter já existe e carregar, se possível
+if exist('bloomFilter.mat', 'file') == 2
+    % Carregar o filtro Bloom existente
+    load('bloomFilter.mat', 'bloomFilter');
+    fprintf('Filtro Bloom carregado com sucesso.\n');
+    
+    % Carregar as transações conhecidas
+    if exist('knownTransactions.mat', 'file') == 2
+        load('knownTransactions.mat', 'knownTransactions');
+        fprintf('Transações conhecidas carregadas com sucesso.\n');
     else
-        str = num2str(value); % Converter número para string
+        knownTransactions = {};  % Se não existir, inicializa vazio
     end
+    
+    data = readtable(FILENAME);
+    n = height(data);  % Número de linhas no ficheiro para calcular FPR
+else
+    % Criar o Bloom Filter
+    bloomFilter = InitializeBF(SIZE);
+
+    % Carregar Dados
+    data = readtable(FILENAME);
+    n = height(data); % número de linhas no ficheiro para calcular FPR
+
+    % Verificar integridade dos dados
+    requiredFields = {'age', 'gender'};
+    if ~all(ismember(requiredFields, data.Properties.VariableNames))
+        error('As colunas necessárias estão ausentes no arquivo CSV.');
+    end
+
+    % Remover linhas com dados ausentes
+    data = rmmissing(data);
+
+    % Adicionar dados ao Bloom Filter
+    disp('Adicionando transações conhecidas ao Bloom Filter...');
+    
+    % Preparar set para guardar algumas transações conhecidas pelo filtro
+    knownTransactions = {};  % Inicializa vazio
+
+    tic; % Início do cronômetro
+    for i = 1:height(data)
+        ageStr = toString(data.age{i});
+        genderStr = toString(data.gender{i});
+
+        % Incluir indicador se é fraude ou não
+        if data.fraud(i) == true
+            fraudIndicator = "IF"; % indicador de fraude
+        else
+            fraudIndicator = "NF"; % não é fraude
+        end
+
+        % Construir o ID com base nos dados obtidos
+        transactionID = sprintf('%s%s%d%s', ageStr, genderStr, i, fraudIndicator);
+        transactionID = erase(transactionID, "'"); % retirar aspas do ID
+
+        % adicionar ID da transação ao filtro
+        bloomFilter = addBF(bloomFilter, transactionID, HASHCOUNT);
+
+        if mod(i,10000) == 0
+            % Mensagem de atualização
+            fprintf('Adicionadas %d transações ao Bloom Filter...\n', i);
+        end
+
+        if mod(i, 100000) == 0
+            % Adiciona transações específicas ao conjunto conhecido
+            knownTransactions{end+1} = transactionID; %#ok<AGROW>
+        end
+    end
+    toc; % Fim do cronômetro
+
+    disp('Adição completa.');
+
+    % Salvar o Bloom Filter e as transações conhecidas
+    save('bloomFilter.mat', 'bloomFilter');
+    save('knownTransactions.mat', 'knownTransactions');
+    fprintf('Transações conhecidas salvas no arquivo.\n');
+end
+    
+
+% Criar o array newTransactions com valores conhecidos e desconhecidos
+disp('Preparando transações para teste...');
+
+% Criar 3 IDs que não foram adicionados ao Bloom Filter
+unknownTransactions = {};
+for i = 1:3
+    randomAge = randi([0, 6]); % Idade aleatória
+    randomGenderNum = randi([0, 1]); % Gênero aleatório (0 ou 1)
+    
+    randomGender = 'M'; % gênero default
+    if randomGenderNum == 1
+        randomGender = 'F';
+    end
+
+    randomFraud = randi([0, 1]); % Fraude aleatória (0 ou 1)
+    fraudIndicator = "IF";
+    if randomFraud == 0
+        fraudIndicator = "NF";
+    end
+
+    randomIndex = randi([n*10, n*20]); % Índice aleatório fora do intervalo usado
+    unknownTransactions{end+1} = sprintf('%d%s%d%s', randomAge, toString(randomGender), randomIndex, fraudIndicator); %#ok<AGROW>
 end
 
-
-% Adicionar dados ao Bloom Filter
-disp('Adicionando transações conhecidas ao Bloom Filter...');
-
-tic; % Início do cronômetro
-for i = 1:height(data)
-    ageStr = toString(data.age{i});
-    genderStr = toString(data.gender{i});
-    transactionID = sprintf('%s%s%d', ageStr, genderStr, i);
-    % adicionar ID da transação ao filtro
-    bloomFilter = addBF(bloomFilter, transactionID, hashCount);
-    if mod(i, 1000) == 0
-        fprintf('Adicionadas %d transações ao Bloom Filter...\n', i);
-    end
-end
-toc; % Fim do cronômetro
-
-disp('Adição completa.');
-
-% Salvar o Bloom Filter
-save('bloomFilter.mat', 'bloomFilter');
+% Combinar valores conhecidos e desconhecidos
+newTransactions = [knownTransactions, unknownTransactions];
 
 % Verificar se novas transações são conhecidas ou suspeitas
-newTransactions = {'transacao_1001', '2M188781', '2F188458', '2M123456', 'transacao_2000','5M30'};
-
 disp('Verificando novas transações:');
+disp('Deve indicar 5 conhecidas e no máximo 3 desconhecidas...')
+
 for i = 1:length(newTransactions)
     transactionID = newTransactions{i};
-    isPresent = checkBF(bloomFilter, transactionID, hashCount);
+    isPresent = checkBF(bloomFilter, transactionID, HASHCOUNT);
 
     resultMsg = 'NÃO é conhecida';
     if isPresent
@@ -67,7 +128,6 @@ for i = 1:length(newTransactions)
     fprintf('A transação "%s" %s.\n', transactionID, resultMsg);
 end
 
-
 % Calcular taxa de falsos positivos
-FPR = falsePositiveRate(size,hashCount,n);
+FPR = falsePositiveRate(SIZE, HASHCOUNT, n);
 disp("Taxa de falsos positivos no Bloom Filter: " + FPR);
