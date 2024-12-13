@@ -127,8 +127,9 @@ for i = 1:length(newTransactions)
 end
 
 % Entrada de ID pelo usuário (com loop até pressionar Enter sem nada)
+% Entrada de ID pelo usuário (com loop até pressionar Enter sem nada)
 while true
-    userID = input('Insira um ID de transação para verificar (exemplo: 3F200000NF), ou pressione Enter para sair: ', 's');
+    userID = input('Insira um ID de transação para verificar (exemplo: 25M123IF), ou pressione Enter para sair: ', 's');
     
     % Se o usuário pressionar Enter sem digitar nada, sai do loop
     if isempty(userID)
