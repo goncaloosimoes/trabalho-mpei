@@ -51,18 +51,6 @@ disp('Matriz de Confusão:');
 disp(confMat);
 disp("-----------------------------");
 
-tp = confMat(1, 1);  % True Positives
-fp = confMat(1, 2);  % False Positives
-fn = confMat(2, 1);  % False Negatives
-tn = confMat(2, 2);  % True Negatives
-
-disp("True positives: " + tp);
-disp("False positives: " + fp);
-disp("False negatives: " + fn);
-disp("True negatives: " + tn);
-
-
-disp("-----------------------------");
 % Calcular métricas usando a função personalizada
 [accuracy, precision, recall, f1, fpr, fnr] = NBcalcularMetricas(confMat);
 
