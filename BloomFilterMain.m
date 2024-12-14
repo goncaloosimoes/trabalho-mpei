@@ -1,11 +1,13 @@
+%% INICIALIZAÇÃO
 clear;
 clc;
 
 FILENAME = 'data_table.csv';
 
 [SIZE, HASHCOUNT] = calcularParametros('data_table.csv', 0.01);
-SIZE = round(SIZE); % Passar de notação científica para int
+input('Pressione ENTER para continuar... ')
 
+%% BLOOM FILTER
 % Verificar se o Bloom Filter já existe e carregar, se possível
 if exist('bloomFilter.mat', 'file') == 2
     % Carregar o filtro Bloom existente
@@ -38,12 +40,20 @@ else
 
     % Remover linhas com dados ausentes
     data = rmmissing(data);
-
-    % Adicionar dados ao Bloom Filter
-    disp('Adicionando transações conhecidas ao Bloom Filter...');
     
     % Preparar set para guardar algumas transações conhecidas pelo filtro
     knownTransactions = {};  % Inicializa vazio
+
+    % Salvar IDs das transações num ficheiro para testes futuros
+    allTransactionsFile = 'allTransactionIDs.txt';
+    fraudTransactionsFile = 'fraudTransactionIDs.txt';
+
+    % Abrir os ficheiros no modo de escrita
+    allFileID = fopen(allTransactionsFile, 'w'); % arquivo para todos os IDs
+    fraudFileID = fopen(fraudTransactionsFile, 'w'); % arquivo para IDs de transações fraudulentas
+
+    % Adicionar dados ao Bloom Filter
+    fprintf("A adicionar transações conhecidas ao Bloom Filter e a guardar os IDs em %s e %s\n", allTransactionsFile, fraudTransactionsFile);
 
     tic; % Início do cronômetro
     for i = 1:height(data)
@@ -62,7 +72,15 @@ else
         transactionID = erase(transactionID, "'"); % retirar aspas do ID
 
         % adicionar ID da transação ao filtro
-        bloomFilter = addBF(bloomFilter, transactionID, HASHCOUNT);
+        if data.fraud(i) == true
+            bloomFilter = addBF(bloomFilter, transactionID, HASHCOUNT);
+        end
+
+        % Salvar todos os IDs no arquivo correspondente
+        fprintf(allFileID, '%s\n', transactionID); % Salva todos os IDs
+        if data.fraud(i) == true
+            fprintf(fraudFileID, '%s\n', transactionID); % Salva apenas IDs de fraude
+        end
 
         if mod(i,10000) == 0
             % Mensagem de atualização
@@ -76,17 +94,20 @@ else
     end
     toc; % Fim do cronômetro
 
+    fclose(allFileID); % fechar o ficheiro de IDs
+    fclose(fraudFileID); % fechar o ficheiro de IDs fraudulentos
+    disp('IDs de transações salvos nos arquivos "allTransactionsIDs.txt" e "fraudTransactionIDs.txt"');
+
     disp('Adição completa.');
 
     % Salvar o Bloom Filter e as transações conhecidas
     save('bloomFilter.mat', 'bloomFilter');
     save('knownTransactions.mat', 'knownTransactions');
-    fprintf('Transações conhecidas salvas no arquivo.\n');
+    fprintf('5 Transações conhecidas salvas no arquivo.\n');
 end
+%% TESTES
 
-% Criar o array newTransactions com valores conhecidos e desconhecidos
 disp('Preparando transações para teste...');
-
 % Criar 3 IDs que não foram adicionados ao Bloom Filter
 unknownTransactions = {};
 for i = 1:3
@@ -126,6 +147,36 @@ for i = 1:length(newTransactions)
     fprintf('A transação "%s" %s.\n', transactionID, resultMsg);
 end
 
+% Ler IDs salvos em 'transactionIDs.txt' e testar no Bloom Filter
+disp('Carregando IDs salvos e testando no Bloom Filter...');
+transactionFile = 'allTransactionIDs.txt';
+
+if exist(transactionFile, 'file') == 2
+    fileID = fopen(transactionFile, 'r');
+    savedIDs = textscan(fileID, '%s'); % Ler todos os IDs
+    fclose(fileID);
+    
+    savedIDs = savedIDs{1}; % Converter para array de células
+
+    % Testar cada ID no Bloom Filter
+    for i = 1:length(savedIDs)
+        transactionID = savedIDs{i};
+        isPresent = checkBF(bloomFilter, transactionID, HASHCOUNT);
+
+        % Verificar presença no filtro
+        resultMsg = 'NÃO é conhecida';
+        if isPresent
+            resultMsg = 'PODE ser conhecida (ou falso positivo)';
+        end
+        fprintf('A transação "%s" %s.\n', transactionID, resultMsg);
+    end
+else
+    disp('Arquivo de IDs de transações não encontrado!');
+end
+
+%%
+% User input
+
 % Entrada de ID pelo usuário (com loop até pressionar Enter sem nada)
 while true
     userID = input('Insira um ID de transação para verificar (exemplo: 3F200000NF), ou pressione Enter para sair: ', 's');
@@ -156,6 +207,19 @@ while true
     end
 end
 
+%% ESTATÍSTICAS DO FILTRO
+
+% Calcular verdadeiros e falsos positivos/negativos presentes
+[TP, FN, FP, TN] = analyzeBloomFilterPerformance(bloomFilter, HASHCOUNT);
+
+% Exibir resultados
+fprintf('\nResultados da análise do Bloom filter:\n');
+fprintf('True Positives (TP): %d\n', TP);
+fprintf('False Negatives (FN): %d\n', FN);
+fprintf('False Positives (FP): %d\n', FP);
+fprintf('True Negatives (TN): %d\n', TN);
+
 % Calcular taxa de falsos positivos
-FPR = falsePositiveRate(SIZE, HASHCOUNT, n);
-disp("Taxa de falsos positivos no Bloom Filter: " + FPR);
+[FPRT, FPRE] = falsePositiveRate(SIZE, HASHCOUNT, n,FP,TN);
+disp("Taxa de falsos positivos téorica no Bloom Filter: " + FPRT);
+disp("Taxa de falsos positivos empírica no Bloom Filter: " + FPRE);

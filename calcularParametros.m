@@ -15,9 +15,11 @@ function [m, k] = calcularParametros(filename, falsePositiveRate)
 
     % Calcular o tamanho ideal do vetor binário (m)
     m = - (n * log(falsePositiveRate)) / (log(2)^2);
+    m = round(m); % Passar de notação científica para int
 
     % Calcular o número ideal de funções hash (k)
     k = (m / n) * log(2);
+    k = ceil(k); % Passar de decimal para o próximo inteiro
 
     % Exibir os resultados
     fprintf('Número de elementos (n): %d\n', n);
