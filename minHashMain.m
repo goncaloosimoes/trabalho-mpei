@@ -55,3 +55,16 @@ disp(minHashSimilarity);
 
 disp('Similaridade entre as duas transações (Jaccard):');
 disp(jaccardSimilarity);
+
+threshold = 0.15;
+
+if (jaccardSimilarity < threshold && minHashSimilarity < threshold)
+    if (transaction1(end) == 1) % se a primeira for fraude, como a distancia é baixa 
+        % dizemos que a segunda pode ser fraudulenta também
+        fprintf("As transações são de natureza possivelmente fraudulenta.");
+    else 
+        fprintf("As transações aparentam ser normais.");
+    end
+else 
+    fprintf("As transações não são semelhantes");
+end

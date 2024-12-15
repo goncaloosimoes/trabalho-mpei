@@ -1,7 +1,7 @@
 %% PROGRAMA PRINCIPAL - DETEÇÃO DE FRAUDE EM TRANSAÇÕES BANCÁRIAS
 
-% Naive Bayes
 naiveBayes
-
-% Bloom Filter
+input('Enter para continuar...');
 BloomFilterMain
+input('Enter para continuar...');
+minHashMain
