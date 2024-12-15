@@ -20,9 +20,13 @@ data.age = grp2idx(categorical(data.age));       % Converte 'age' para número
 data.gender = grp2idx(categorical(data.gender)); % Converte 'gender' para número
 data.category = grp2idx(categorical(data.category)); % Converte 'category' para número
 
+% Solicitar ao utilizador os índices das transações para comparar
+index1 = input('Por favor, insira o índice da primeira transação: ');
+index2 = input('Por favor, insira o índice da segunda transação: ');
+
 % Selecionar duas transações para comparar
-transaction1 = data(30, :); % Primeira transação
-transaction2 = data(31, :); % Segunda transação
+transaction1 = data(index1, :); % Primeira transação
+transaction2 = data(index2, :); % Segunda transação
 
 % Converter transações para vetores categóricos e contínuos
 categoricalData1 = [transaction1.age, transaction1.gender, transaction1.category, transaction1.fraud];
@@ -32,7 +36,7 @@ categoricalData2 = [transaction2.age, transaction2.gender, transaction2.category
 categoricalData1 = unique(categoricalData1); % Transforma em conjunto
 categoricalData2 = unique(categoricalData2); % Transforma em conjunto
 
-numHashes = 200; % Número de funções hash aumentado para melhorar a precisão
+numHashes = 500; % Número de funções hash aumentado para melhorar a precisão
 
 % Calcular assinaturas Min-Hash para as partes categóricas das transações
 signature1 = calculateMinHashSignature(categoricalData1, numHashes);
