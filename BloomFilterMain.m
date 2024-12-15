@@ -32,7 +32,7 @@ else
     data = readtable(FILENAME);
     n = height(data); % número de linhas no ficheiro para calcular FPR
 
-    % Verificar integridade dos dados
+    % Verificar existência dos dados
     requiredFields = {'age', 'gender'};
     if ~all(ismember(requiredFields, data.Properties.VariableNames))
         error('As colunas necessárias estão ausentes no arquivo CSV.');
@@ -55,7 +55,7 @@ else
     % Adicionar dados ao Bloom Filter
     fprintf("A adicionar transações conhecidas ao Bloom Filter e a guardar os IDs em %s e %s\n", allTransactionsFile, fraudTransactionsFile);
 
-    tic; % Início do cronômetro
+    tic; % Início do cronômetro para medir performance
     
     %% Divisão dos dados em treino (95%) e teste (5%)
     cv = cvpartition(height(data), 'HoldOut', 0.05);  % 5% para teste, 95% para treino
@@ -126,9 +126,14 @@ disp('Preparando transações para teste...');
 unknownTransactions = {};
 for i = 1:3
     randomAge = randi([0, 6]); % Idade aleatória
+    % note-se que as idades correspondem a um intervalo
+    % isto é: 0 -> menor de 18
+    % 1 -> 18 - 26
+    % 2 -> 26 - 35 e assim em diante...
+
     randomGenderNum = randi([0, 1]); % Gênero aleatório (0 ou 1)
     
-    randomGender = 'M'; % gênero default
+    randomGender = 'M'; % género default
     if randomGenderNum == 1
         randomGender = 'F';
     end

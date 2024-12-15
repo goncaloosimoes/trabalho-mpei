@@ -1,5 +1,5 @@
 function [TP, FN, FP, TN] = analyzeBloomFilterPerformance(bloomFilter, HASHCOUNT)
-    % Arquivos contendo os IDs
+    % Arquivos que contêm os IDs das transações
     allTransactionsFile = 'allTransactionIDs.txt';
     fraudTransactionsFile = 'fraudTransactionIDs.txt';
     

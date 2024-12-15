@@ -1,5 +1,5 @@
 function check = checkBF(BF,key,k)
-% checks if a key is likely in the bloom filter
+% verifica se uma chave está dentro do filtro ou não
     n = length(BF);
     check=true;
     for i=1:k

@@ -1,5 +1,5 @@
 function BF = addBF(BF,key,k)
-% adds a new key to the bloom filter
+% adiciona um elemento ao filtro de bloom
     n = length(BF);
     for i=1:k
         modified_key = [key num2str(i)];

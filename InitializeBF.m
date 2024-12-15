@@ -1,4 +1,4 @@
 function BF = InitializeBF(n)
-% returns BF as an array of length n with all falses
+% inicializa o filtro de bloom num array de n elementos
     BF = false(1,n);
 end
