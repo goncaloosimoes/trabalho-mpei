@@ -17,8 +17,17 @@ data.category = grp2idx(categorical(data.category)); % Converte 'category' para 
 % Converter os dados em uma matriz binária
 binaryData = data{:,:} > 0;
 
-numHashes = 100; % Número de funções hash
-signature = minHash(binaryData, numHashes);
+% Selecionar duas transações para comparar
+transaction1 = binaryData(1, :); % Primeira transação
+transaction2 = binaryData(3912, :); % Segunda transação
 
-disp('Min-Hash Signature:');
-disp(signature);
+numHashes = 100; % Número de funções hash
+% Calcular assinaturas Min-Hash para as duas transações
+signature1 = minHash(transaction1, numHashes);
+signature2 = minHash(transaction2, numHashes);
+
+% Comparar assinaturas Min-Hash
+similarity = compareMinHashSignatures(signature1, signature2);
+
+disp('Similaridade entre as duas transações:');
+disp(similarity);
