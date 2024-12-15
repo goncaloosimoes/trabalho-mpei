@@ -56,12 +56,25 @@ else
     fprintf("A adicionar transações conhecidas ao Bloom Filter e a guardar os IDs em %s e %s\n", allTransactionsFile, fraudTransactionsFile);
 
     tic; % Início do cronômetro
-    for i = 1:height(data)
-        ageStr = toString(data.age{i});
-        genderStr = toString(data.gender{i});
+    
+    %% Divisão dos dados em treino (95%) e teste (5%)
+    cv = cvpartition(height(data), 'HoldOut', 0.05);  % 5% para teste, 95% para treino
+
+    % Indices dos dados de treino e teste
+    trainData = data(training(cv), :);  % Dados de treino (95%)
+    testData = data(test(cv), :);  % Dados de teste (5%)
+
+    % Mostrar a quantidade de dados de treino e teste
+    fprintf('Dados de treino: %d\n', height(trainData));
+    fprintf('Dados de teste: %d\n', height(testData));
+
+    % Adicionar transações de treino ao Bloom Filter
+    for i = 1:height(trainData)
+        ageStr = toString(trainData.age{i});
+        genderStr = toString(trainData.gender{i});
 
         % Incluir indicador se é fraude ou não
-        if data.fraud(i) == true
+        if trainData.fraud(i) == true
             fraudIndicator = "IF"; % indicador de fraude
         else
             fraudIndicator = "NF"; % não é fraude
@@ -72,13 +85,13 @@ else
         transactionID = erase(transactionID, "'"); % retirar aspas do ID
 
         % adicionar ID da transação ao filtro
-        if data.fraud(i) == true
+        if trainData.fraud(i) == true
             bloomFilter = addBF(bloomFilter, transactionID, HASHCOUNT);
         end
 
         % Salvar todos os IDs no arquivo correspondente
         fprintf(allFileID, '%s\n', transactionID); % Salva todos os IDs
-        if data.fraud(i) == true
+        if trainData.fraud(i) == true
             fprintf(fraudFileID, '%s\n', transactionID); % Salva apenas IDs de fraude
         end
 
@@ -105,6 +118,7 @@ else
     save('knownTransactions.mat', 'knownTransactions');
     fprintf('5 Transações conhecidas salvas no arquivo.\n');
 end
+
 %% TESTES
 
 disp('Preparando transações para teste...');
@@ -140,9 +154,9 @@ for i = 1:length(newTransactions)
     transactionID = newTransactions{i};
     isPresent = checkBF(bloomFilter, transactionID, HASHCOUNT);
 
-    resultMsg = 'NÃO é conhecida';
+    resultMsg = 'NÃO é conhecida como fraude';
     if isPresent
-        resultMsg = 'PODE ser conhecida (ou falso positivo)';
+        resultMsg = 'PODE ser conhecida como fraude (ou falso positivo)';
     end
     fprintf('A transação "%s" %s.\n', transactionID, resultMsg);
 end
