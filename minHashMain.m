@@ -21,14 +21,18 @@ data.gender = grp2idx(categorical(data.gender)); % Converte 'gender' para númer
 data.category = grp2idx(categorical(data.category)); % Converte 'category' para número
 
 % Selecionar duas transações para comparar
-transaction1 = data(1, :); % Primeira transação
-transaction2 = data(300, :); % Segunda transação
+transaction1 = data(30, :); % Primeira transação
+transaction2 = data(31, :); % Segunda transação
 
 % Converter transações para vetores categóricos e contínuos
 categoricalData1 = [transaction1.age, transaction1.gender, transaction1.category, transaction1.fraud];
 categoricalData2 = [transaction2.age, transaction2.gender, transaction2.category, transaction2.fraud];
 
-numHashes = 100; % Número de funções hash
+% Remover duplicatas para criar conjuntos representativos
+categoricalData1 = unique(categoricalData1); % Transforma em conjunto
+categoricalData2 = unique(categoricalData2); % Transforma em conjunto
+
+numHashes = 200; % Número de funções hash aumentado para melhorar a precisão
 
 % Calcular assinaturas Min-Hash para as partes categóricas das transações
 signature1 = calculateMinHashSignature(categoricalData1, numHashes);
@@ -38,8 +42,8 @@ signature2 = calculateMinHashSignature(categoricalData2, numHashes);
 minHashSimilarity = compareMinHashSignatures(signature1, signature2);
 
 % Calcular a similaridade de Jaccard diretamente para a parte categórica
-intersection = sum(categoricalData1 == categoricalData2);
-union = length(categoricalData1);
+intersection = length(intersect(categoricalData1, categoricalData2)); % Tamanho da interseção
+union = length(union(categoricalData1, categoricalData2));             % Tamanho da união
 jaccardSimilarity = intersection / union;
 
 disp('Similaridade entre as duas transações (Min-Hash):');

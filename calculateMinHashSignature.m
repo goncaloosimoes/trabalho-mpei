@@ -3,12 +3,14 @@ function signature = calculateMinHashSignature(transaction, numHashes)
     % numHashes: número de funções hash a serem usadas
 
     numElements = length(transaction);
+    primeNumber = 101; % Número primo para dispersão hash
     signature = inf(numHashes, 1);
     
     for i = 1:numHashes
         for k = 1:numElements
             if transaction(k) ~= 0 % Considerar elementos não nulos
-                h = mod((k + i), numElements) + 1; % Função hash baseada em mod
+                % Nova função hash baseada no valor de cada elemento
+                h = mod((k * i + transaction(k)), primeNumber) + 1;
                 signature(i) = min(signature(i), h);
             end
         end
