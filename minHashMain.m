@@ -19,7 +19,7 @@ binaryData = data{:,:} > 0;
 
 % Selecionar duas transações para comparar
 transaction1 = binaryData(1, :); % Primeira transação
-transaction2 = binaryData(3912, :); % Segunda transação
+transaction2 = binaryData(4, :); % Segunda transação
 
 numHashes = 100; % Número de funções hash
 % Calcular assinaturas Min-Hash para as duas transações
@@ -29,5 +29,13 @@ signature2 = minHash(transaction2, numHashes);
 % Comparar assinaturas Min-Hash
 similarity = compareMinHashSignatures(signature1, signature2);
 
-disp('Similaridade entre as duas transações:');
+% Calcular a similaridade de Jaccard diretamente
+intersection = sum(transaction1 & transaction2);
+union = sum(transaction1 | transaction2);
+jaccardSimilarity = intersection / union;
+
+disp('Similaridade entre as duas transações (Min-Hash):');
 disp(similarity);
+
+disp('Similaridade entre as duas transações (Jaccard):');
+disp(jaccardSimilarity);
