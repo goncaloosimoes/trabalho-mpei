@@ -44,7 +44,7 @@ confMat = NBcalcularMatrizConfusao(yTest, yPred);
 % Visualizar Matriz de Confusão
 figure;
 confusionchart(yTest, yPred);
-title('Matriz de Confusão');
+title('Matriz de Confusão - Naive Bayes');
 
 % Matriz de confusão
 disp('Matriz de Confusão:');
